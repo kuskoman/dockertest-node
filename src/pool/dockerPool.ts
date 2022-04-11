@@ -1,7 +1,6 @@
 import { Logger } from "@/utils/logger.interfaces";
 import Dockerode from "dockerode";
-import { promisify } from "util";
-import { DockerPoolConstructorInput, RunOptions } from "./dockerPool.interfaces";
+import { DockerPoolConstructorInput } from "./dockerPool.interfaces";
 import { getDockerodeInstance, getOrCreateLogger } from "./dockerPool.utils";
 
 export class DockerPool {
@@ -14,11 +13,8 @@ export class DockerPool {
         this.logger = getOrCreateLogger(logger);
     }
 
-    public async runWithOptions(options: RunOptions) {
-        const image = this.parseImage(options.repository, options.tag);
-        this.logger.debug(`Parsed image to ${image}`);
-
-        const container = await this.createContainer({ Image: image });
+    public async runWithOptions(options: Dockerode.ContainerCreateOptions) {
+        const container = await this.createContainer(options);
         await this.startContainer(container);
 
         return container;
@@ -39,7 +35,6 @@ export class DockerPool {
     }
 
     public async removeAll() {
-        await promisify(setTimeout)(2000);
         try {
             await this.stopAll();
         } catch (e) {
@@ -68,10 +63,6 @@ export class DockerPool {
     public async removeContainer(container: Dockerode.Container) {
         await container.remove();
         this.logger.log(`Container ${container.id} removed`);
-    }
-
-    private parseImage(repository: string, tag = "latest") {
-        return `${repository}:${tag}`;
     }
 
     private async createContainer(opts: Dockerode.ContainerCreateOptions) {
