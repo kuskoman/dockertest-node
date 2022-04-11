@@ -32,10 +32,12 @@ module.exports = {
                         fixWith: "string",
                     },
 
-                    Function: "Avoid this type unless it's absolutely necessary. Create custom type instead.",
+                    Function:
+                        "Avoid this type unless it's absolutely necessary. Create custom type instead.",
                 },
             },
         ],
-        "no-console": "error",
+        "no-empty-function": "off",
+        "@typescript-eslint/no-empty-function": "off",
     },
 };
