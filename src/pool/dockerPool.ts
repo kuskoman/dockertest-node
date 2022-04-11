@@ -20,18 +20,13 @@ export class DockerPool {
 
         const container = await this.createContainer({ Image: image });
         await this.startContainer(container);
+
+        return container;
     }
 
     public async stopAll() {
         const stopPromises = this.containers.map(async (container) => {
-            const containerInspection = await container.inspect();
-            if (!containerInspection.State.Running) {
-                return this.logger.debug(
-                    `Container ${container.id} is not running. Skipping stop...`,
-                );
-            }
-            await container.stop();
-            this.logger.log(`Container ${container.id} stopped`);
+            await this.stopContainer(container);
         });
 
         const stopResults = await Promise.allSettled(stopPromises);
@@ -54,12 +49,25 @@ export class DockerPool {
         }
 
         const removePromises = this.containers.map(async (container) => {
-            await container.remove();
-            this.logger.log(`Container ${container.id} removed`);
+            await this.removeContainer(container);
         });
 
         await Promise.all(removePromises);
         this.logger.log("Successfully removed all containers");
+    }
+
+    public async stopContainer(container: Dockerode.Container) {
+        const containerInspection = await container.inspect();
+        if (!containerInspection.State.Running) {
+            return this.logger.debug(`Container ${container.id} is not running. Skipping stop...`);
+        }
+        await container.stop();
+        this.logger.log(`Container ${container.id} stopped`);
+    }
+
+    public async removeContainer(container: Dockerode.Container) {
+        await container.remove();
+        this.logger.log(`Container ${container.id} removed`);
     }
 
     private parseImage(repository: string, tag = "latest") {
