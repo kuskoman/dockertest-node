@@ -4,7 +4,7 @@ import { DockerPool } from "../src/main";
 
 const main = async () => {
     const pool = new DockerPool();
-    await pool.runWithOptions({ repository: "node" });
+    await pool.runWithOptions({ Image: "node" });
     await pool.removeAll();
 };
 
