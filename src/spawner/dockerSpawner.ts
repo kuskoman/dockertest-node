@@ -6,6 +6,7 @@ import Dockerode from "dockerode";
 import { SpawnerOptions } from "./dockerSpawner.interfaces";
 import getPort from "get-port";
 import { arrayFromRange } from "@/utils/math";
+import { Tuple } from "@/utils/tuple";
 
 export class DockerSpawner {
     private readonly pool: DockerPool;
@@ -30,6 +31,24 @@ export class DockerSpawner {
         const ExposedPorts = await this.figureOutPorts(options);
 
         return await this.pool.runWithOptions({ ...containerOptions, ExposedPorts });
+    }
+
+    public async spawnMany<T extends number>(
+        count: T,
+        options:
+            | Partial<Dockerode.ContainerCreateOptions>
+            | Tuple<Dockerode.ContainerCreateOptions, T> = {},
+    ) {
+        const containerSpawnPromises: Promise<Dockerode.Container>[] = [];
+
+        for (let i = 0; i < count; i++) {
+            const containerOptions = Array.isArray(options) ? options[i] : options;
+            const container = this.spawn(containerOptions);
+            containerSpawnPromises.push(container);
+        }
+
+        const spawnedContainers = await Promise.all(containerSpawnPromises);
+        return spawnedContainers;
     }
 
     private async figureOutPorts(
