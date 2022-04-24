@@ -65,6 +65,18 @@ export class DockerPool {
         this.logger.log(`Container ${container.id} removed`);
     }
 
+    public async buildImage(
+        ctx: Dockerode.ImageBuildContext,
+        options: Dockerode.ImageBuildOptions,
+    ) {
+        const stream = await this.docker.buildImage(ctx, options);
+        stream.pipe(process.stdout);
+
+        return new Promise((resolve) => {
+            stream.on("end", resolve);
+        });
+    }
+
     private async createContainer(opts: Dockerode.ContainerCreateOptions) {
         this.logger.log(`Creating container with image ${opts.Image}`);
         const container = await this.docker.createContainer(opts);
@@ -77,6 +89,7 @@ export class DockerPool {
     private async startContainer(container: Dockerode.Container) {
         this.logger.log(`Starting container ${container.id}`);
         await container.start();
+        await container.wait();
         this.logger.log(`Started container ${container.id}`);
     }
 }

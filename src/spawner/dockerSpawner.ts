@@ -3,10 +3,11 @@ import { DockerPoolConstructorInput } from "@/pool/dockerPool.interfaces";
 import { getOrCreateLogger } from "@/pool/dockerPool.utils";
 import { Logger } from "@/utils/logger.interfaces";
 import Dockerode from "dockerode";
-import { PortBindings, SpawnerOptions } from "./dockerSpawner.interfaces";
+import { SpawnerOptions } from "./dockerSpawner.interfaces";
 import getPort from "get-port";
 import { arrayFromRange } from "@/utils/math";
 import { Tuple } from "@/utils/tuple";
+import { configurePorts } from "@/helpers/configurePorts";
 
 export class DockerSpawner {
     private readonly pool: DockerPool;
@@ -28,18 +29,11 @@ export class DockerSpawner {
             ...options,
         };
 
-        const PortBindings = await this.figureOutPorts(options);
+        const availablePorts = await this.figureOutPorts(options);
 
-        return await this.pool.runWithOptions({
-            ...containerOptions,
-            HostConfig: {
-                ...(containerOptions.HostConfig || {}),
-                PortBindings: {
-                    ...(containerOptions.HostConfig?.PortBindings || {}),
-                    ...PortBindings,
-                },
-            },
-        });
+        const runOptionsWithPorts = configurePorts(containerOptions, availablePorts);
+
+        return await this.pool.runWithOptions(runOptionsWithPorts);
     }
 
     public async spawnMany<T extends number>(
@@ -64,9 +58,7 @@ export class DockerSpawner {
         await this.pool.removeAll();
     }
 
-    private async figureOutPorts(
-        options: Partial<Dockerode.ContainerCreateOptions>,
-    ): Promise<PortBindings> {
+    private async figureOutPorts(options: Partial<Dockerode.ContainerCreateOptions>) {
         const spawnerPorts = this.spawnerOptions.ports || [];
         const isSettingPortsSet = spawnerPorts.length > 0;
         if (!options.HostConfig?.PortBindings && !isSettingPortsSet) {
@@ -92,18 +84,13 @@ export class DockerSpawner {
 
             return {
                 containerPort,
-                port,
+                hostPort: port,
                 type: portSettings.type,
             };
         });
 
         const availablePorts = await Promise.all(spawnerPortPromises);
-        return availablePorts.reduce((acc, curr) => {
-            const type = curr.type || "tcp";
-            const containerPortFullName = `${curr.containerPort}/${type}`;
-
-            return { ...acc, [containerPortFullName]: [{ HostPort: curr.port.toString() }] };
-        }, {});
+        return availablePorts;
     }
 
     private async findSinglePort(range: number[]): Promise<number> {
