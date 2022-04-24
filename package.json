@@ -22,7 +22,6 @@
         "test:e2e": "jest --config ./jest.config.e2e.ts",
         "test:e2e:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/jest/bin/jest --config ./jest.config.e2e.ts --runInBand",
         "release": "./node_modules/.bin/standard-version --no-verify",
-        "preview": "node -r tsconfig-paths/register -r ts-node/register scripts/preview.ts",
         "release:major": "yarn release --release-as major",
         "release:minor": "yarn release --release-as minor",
         "release:patch": "yarn release --release-as patch"
@@ -54,6 +53,6 @@
     },
     "dependencies": {
         "dockerode": "^3.3.1",
-        "get-port": "^6.1.2"
+        "get-port": "^5.1.1"
     }
 }
