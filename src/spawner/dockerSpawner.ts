@@ -14,9 +14,9 @@ export class DockerSpawner {
     private readonly reservedPorts: number[] = [];
 
     constructor(
-        poolConfig: DockerPoolConstructorInput,
-        private readonly spawnerOptions: SpawnerOptions = {},
         private readonly initialContainerOptions: Partial<Dockerode.ContainerCreateOptions> = {},
+        private readonly spawnerOptions: SpawnerOptions = {},
+        poolConfig?: DockerPoolConstructorInput,
     ) {
         this.pool = new DockerPool(poolConfig);
         this.logger = getOrCreateLogger(this.spawnerOptions.logger);
