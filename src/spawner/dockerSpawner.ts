@@ -51,6 +51,10 @@ export class DockerSpawner {
         return spawnedContainers;
     }
 
+    public async removeContainers() {
+        await this.pool.removeAll();
+    }
+
     private async figureOutPorts(
         options: Partial<Dockerode.ContainerCreateOptions>,
     ): Promise<Dockerode.ContainerCreateOptions["ExposedPorts"]> {
